@@ -1,0 +1,19 @@
+{
+  "ytype": "/ytypes/storage/",
+  "ytype_label": "Storage",
+  "name": "studio-disk",
+  "label": "studio disk",
+  "description": "source medium — where accessioned artifacts came from (private tier; no fixity_anchor: it is the SOURCE, not the store holding the book)",
+  "storage_kind": "harddisk",
+  "status": "online",
+  "accessioned_at": "2026-07-22",
+  "last_verified": "2026-07-22",
+  "media_lifetime": "P5Y",
+  "graph": [
+    {
+      "predicate": "spatial:within",
+      "yobj": "locations/ea/ce/b56187bc-730c-4538-9634-67cfb2a55231.yobj"
+    }
+  ],
+  "serial_number": "WD-2024-STICK"
+}

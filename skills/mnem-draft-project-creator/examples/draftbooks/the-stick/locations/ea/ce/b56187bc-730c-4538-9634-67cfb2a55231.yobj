@@ -1,0 +1,11 @@
+{
+  "ytype": "/ytypes/base/",
+  "ytype_label": "Location",
+  "name": "home-studio",
+  "label": "Home studio",
+  "description": "a location (private tier)",
+  "graph": [],
+  "extra_metadata": {
+    "kind": "location"
+  }
+}

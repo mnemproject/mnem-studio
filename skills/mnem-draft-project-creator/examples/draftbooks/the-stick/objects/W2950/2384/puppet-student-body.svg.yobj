@@ -1,0 +1,29 @@
+{
+  "ytype": "/ytypes/image/",
+  "ytype_label": "Image",
+  "name": "puppet-student-body",
+  "label": "puppet student-body",
+  "description": "image artifact preserved into the draftbook",
+  "license": "CC0-1.0",
+  "provenance": {
+    "native_path": "/path/to/source-material/puppets/student-body.svg",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/puppet-student-body.svg",
+    "kuri": "blake2b://742ccde9fb4a0b18560ae6ddaf2e68c4fed27c98d6c4b58be3d68f832abc22c6"
+  },
+  "dimensions": {
+    "width": 220,
+    "height": 400
+  },
+  "thumbnail": "files/W2950/2384/puppet-student-body.svg"
+}

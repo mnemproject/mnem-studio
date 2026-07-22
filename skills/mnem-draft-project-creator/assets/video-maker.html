@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Stick — reel studio (draft)</title>
+<style>
+  /* ===== mnem — round 3e / instrument.  The reel studio: a Movie-Maker-style
+     editor (left) that renders a 9:16 short (SEIJAKU CUT motion language, by
+     Fable) to canvas, with layers driven by an SRT + a generated hirajōshi
+     synth score, and a record button that exports the short.  Flat editorial,
+     ink rules, electric-blue accent, square corners, zero shadow. */
+  :root{
+    --white:#fff; --paper:#f4f7f5; --ink:#101a1c; --ink-muted:#4d5b56;
+    --ink-faint:#8b968f; --line:#dfe6e2; --accent:#1717f4; --accent-deep:#1111e8;
+    --accent-bright:#5d6eff; --accent-wash:rgba(23,23,244,.06);
+    --display:"SF Pro Display",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --serif:"Iowan Old Style",Palatino,Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--display);font-size:14px;
+       -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .bar{height:3px;background:var(--ink);flex:none;}
+  .top{display:flex;align-items:baseline;justify-content:space-between;padding:14px 22px 12px;flex:none;}
+  .top .t{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em;}
+  .top .t em{font-style:normal;color:var(--accent);}
+  .top .meta{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-align:right;line-height:1.7;}
+  .top .meta b{color:var(--accent);font-weight:500;}
+
+  .work{flex:1;display:flex;min-height:0;}
+  /* stage */
+  .stage{flex:none;width:44%;max-width:520px;border-right:1px solid var(--line);
+         display:flex;flex-direction:column;align-items:center;justify-content:center;
+         background:var(--white);padding:18px;gap:14px;min-height:0;}
+  .frame{position:relative;height:100%;max-height:72vh;aspect-ratio:9/16;background:var(--paper);
+         border:1px solid var(--ink);}
+  canvas{display:block;width:100%;height:100%;}
+  .transport{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-muted);}
+  .transport button{font:inherit;}
+  .clock b{color:var(--ink);font-weight:600;}
+
+  /* controls */
+  .panel{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;}
+  .rows{flex:1;overflow:auto;padding:18px 22px;}
+  .card{border:1px solid var(--line);margin-bottom:16px;}
+  .card h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.02em;text-transform:uppercase;
+           margin:0;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink-muted);
+           display:flex;justify-content:space-between;align-items:center;}
+  .card h3 .n{font-family:var(--mono);font-size:11px;color:var(--accent);}
+  .card .in{padding:12px;}
+  .seg{display:inline-flex;border:1px solid var(--ink);}
+  .seg button{font:inherit;font-family:var(--display);font-weight:600;font-size:12px;padding:5px 12px;
+              background:var(--white);color:var(--ink);border:none;border-right:1px solid var(--ink);cursor:pointer;}
+  .seg button:last-child{border-right:none;}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:#f0f2ff;}
+  label.chk{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink);cursor:pointer;}
+  textarea{width:100%;min-height:150px;font-family:var(--mono);font-size:12px;line-height:1.6;
+           border:1px solid var(--line);padding:10px;resize:vertical;color:var(--ink);background:var(--paper);}
+  .hint{font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.7;margin-top:8px;}
+  .hint a{color:var(--accent);}
+  button.act{font-family:var(--display);font-weight:700;font-size:13px;padding:9px 16px;border:1px solid var(--ink);
+             background:var(--white);color:var(--ink);cursor:pointer;}
+  button.act.go{background:var(--accent);border-color:var(--accent);color:#f0f2ff;}
+  button.act.rec{background:#c0392b;border-color:#c0392b;color:#fff;}
+  button.act[disabled]{opacity:.4;cursor:default;}
+  .recbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .recstat{font-family:var(--mono);font-size:11px;color:var(--ink-muted);}
+  .out video{display:block;max-width:100%;max-height:300px;margin:10px auto 0;border:1px solid var(--ink);background:#000;}
+  .takes-head{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--ink-muted);margin:12px 0 2px;}
+  .takes-head b{color:var(--accent-deep);}
+
+  /* ---- player view (?view=player): fullscreen reel, hidden menu — the mnembyte default ---- */
+  body.playerview .top, body.playerview .bar, body.playerview .panel,
+  body.playerview .transport{ display:none; }
+  body.playerview{ background:#0E1030; }
+  body.playerview .work{ height:100vh; }
+  body.playerview .stage{ width:100vw; max-width:none; border:none; padding:0;
+    background:#0E1030; justify-content:center; }
+  body.playerview .frame{ height:100vh; max-height:100vh; border:none; }
+  .pmenu{ position:fixed; top:0; left:0; right:0; transform:translateY(-100%);
+    transition:transform .28s ease; background:rgba(14,16,48,.94); color:#EDE9FF;
+    font-family:var(--mono); font-size:13px; line-height:2; padding:16px 20px 14px; z-index:30; display:none; }
+  body.playerview .pmenu{ display:block; }
+  .pmenu.open{ transform:none; }
+  .pmenu a{ color:#9FB0FF; text-decoration:none; }
+  .pmenu a:hover{ color:#FFFFFF; }
+  .pmenu .dim{ opacity:.65; font-size:11.5px; line-height:1.7; }
+  .phandle{ position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:31;
+    color:rgba(237,233,255,.5); cursor:pointer; font-size:20px; display:none; user-select:none; }
+  body.playerview .phandle{ display:block; }
+  .reclist{list-style:none;margin:10px 0 0;padding:0;}
+  .reclist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;}
+  .reclist li:first-child{border-top:none;}
+  .reclist .nm{flex:1;text-align:left;background:none;border:none;color:var(--ink);font:inherit;cursor:pointer;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .reclist .nm:hover{color:var(--accent);}
+  .reclist .sz{color:var(--ink-faint);flex:none;}
+  .reclist a.dl,.reclist button.del,.reclist button.sv{font-family:var(--display);font-weight:700;font-size:11px;padding:3px 9px;border:1px solid var(--ink);cursor:pointer;text-decoration:none;flex:none;background:var(--white);color:var(--ink);}
+  .reclist a.dl{background:var(--accent);border-color:var(--accent);color:#f0f2ff;}
+  .reclist button.del{border-color:#c0392b;color:#c0392b;}
+
+  /* timeline */
+  .timeline{flex:none;border-top:1px solid var(--ink);background:var(--white);padding:12px 22px 16px;}
+  .ruler{position:relative;height:20px;margin-left:78px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .ruler .tick{position:absolute;top:0;bottom:0;border-left:1px solid var(--line);font-family:var(--mono);
+               font-size:10px;color:var(--ink-faint);padding-left:3px;}
+  .lane{display:flex;align-items:stretch;height:30px;margin-top:6px;}
+  .lane .name{flex:none;width:78px;font-family:var(--mono);font-size:10px;color:var(--ink-muted);
+              display:flex;align-items:center;text-transform:uppercase;letter-spacing:.04em;}
+  .lane .track{position:relative;flex:1;background:var(--paper);border:1px solid var(--line);}
+  .clip{position:absolute;top:2px;bottom:2px;background:var(--accent-wash);border:1px solid var(--accent);
+        font-family:var(--mono);font-size:10px;color:var(--accent-deep);padding:2px 5px;overflow:hidden;
+        white-space:nowrap;display:flex;align-items:center;}
+  .clip.ink{background:rgba(16,26,28,.05);border-color:var(--ink-muted);color:var(--ink-muted);}
+  .lane.off .track{opacity:.35;}
+  .playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);pointer-events:none;z-index:5;}
+  .tlwrap{position:relative;}
+  .beatmark{position:absolute;top:-2px;width:1px;background:var(--ink-faint);height:6px;}
+</style>
+</head>
+<body>
+<div class="pmenu" id="pmenu"></div>
+<div class="phandle" id="phandle" title="menu">⌄</div>
+<div class="bar"></div>
+<div class="top">
+  <div class="t">The <em>Stick</em> · reel studio</div>
+  <div class="meta">SEIJAKU CUT · <b>10.0s</b> · 9:16<br>visual language · Fable · build · Opus</div>
+</div>
+<div class="bar" style="height:1px;background:var(--line);"></div>
+
+<div class="work">
+  <!-- stage -->
+  <div class="stage">
+    <div class="frame"><canvas id="cv" width="540" height="960"></canvas></div>
+    <div class="transport">
+      <button class="act" id="play">▶ Play</button>
+      <label class="chk" title="replay from the top when it ends"><input type="checkbox" id="loop"> loop</label>
+      <span class="clock"><b id="tnow">0.0</b> / 10.0s</span>
+    </div>
+  </div>
+
+  <!-- controls -->
+  <div class="panel">
+    <div class="rows">
+      <div class="card">
+        <h3>Record the short <span class="n">MediaRecorder · WebM</span></h3>
+        <div class="in">
+          <div class="recbar">
+            <button class="act rec" id="rec">● Record 10s</button>
+            <span class="recstat" id="recstat">canvas + generated audio → a downloadable short</span>
+          </div>
+          <div class="out" id="out" hidden>
+            <div class="takes-head"><b>TAKES</b> · download to keep — reloading the page clears them</div>
+            <ul class="reclist" id="reclist"></ul>
+            <video id="preview" controls playsinline></video>
+            <div class="hint" id="ighint"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Layers</h3>
+        <div class="in" style="display:flex;flex-direction:column;gap:10px;">
+          <label class="chk"><input type="checkbox" id="lyVisual" checked disabled> VISUAL · SEIJAKU CUT (canvas keyframes)</label>
+          <label class="chk"><input type="checkbox" id="lyCap" checked> CAPTIONS · from the SRT below</label>
+          <label class="chk"><input type="checkbox" id="lyMusic" checked> MUSIC · generated hirajōshi bowls (synth)</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Caption layer <span class="n">input · SRT</span></h3>
+        <div class="in">
+          <div id="langRow" hidden style="margin-bottom:9px;display:flex;align-items:center;gap:8px;">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);">LANGUAGE</span>
+            <select id="lang" style="font:inherit;font-family:var(--mono);font-size:12px;padding:3px 6px;border:1px solid var(--ink);background:var(--white);color:var(--ink);"></select>
+          </div>
+          <textarea id="srt" spellcheck="false"></textarea>
+          <div class="hint">
+            An <b>SRT</b> is a timeline of cues — the perfect open format for a caption layer.
+            Edit it and the short re-times live. Lowercase-first cues render as the mono "act" voice;
+            others as the serif "speech" voice.<br>
+            For HTML-on-a-timeline (styled/positioned cues), the web-native superset is
+            <b>WebVTT</b> — same cue shape, richer payload — the natural next input format.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- timeline editor -->
+    <div class="timeline">
+      <div class="tlwrap">
+        <div class="ruler" id="ruler"></div>
+        <div class="lane" id="laneV"><div class="name">visual</div><div class="track" id="trkV"></div></div>
+        <div class="lane" id="laneC"><div class="name">captions</div><div class="track" id="trkC"></div></div>
+        <div class="lane" id="laneM"><div class="name">music</div><div class="track" id="trkM"></div></div>
+        <div class="playhead" id="ph" style="left:78px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ============================================================ constants
+const W = 540, H = 960;                 // canvas backing (9:16); design space is normalized 0..1
+const BASE = 10.0;   // the SEIJAKU beats are authored on a 10s spine
+let DUR = 20.0;      // movie length (a storyboard yObj's `duration` overrides); the spine scales to it
+const C = { INK:'#101a1c', PAPER:'#f4f7f5', FAINT:'#8b968f', MUTED:'#4d5b56',
+            ACCENT:'#1717f4', ACCENTB:'#5d6eff', DEEP:'#1111e8' };
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+// ---- math / easing ----
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const lerp = (a,b,u) => a + (b-a)*u;
+const seg = (t,t0,t1) => clamp01((t-t0)/(t1-t0));
+function bez(x1,y1,x2,y2){
+  const cx=3*x1, bx=3*(x2-x1)-cx, ax=1-cx-bx;
+  const cy=3*y1, by=3*(y2-y1)-cy, ay=1-cy-by;
+  const X=u=>((ax*u+bx)*u+cx)*u, Y=u=>((ay*u+by)*u+cy)*u, dX=u=>(3*ax*u+2*bx)*u+cx;
+  return t=>{ if(t<=0)return 0; if(t>=1)return 1; let u=t;
+    for(let i=0;i<8;i++){const x=X(u)-t; if(Math.abs(x)<1e-4)break; const d=dX(u); if(Math.abs(d)<1e-6)break; u-=x/d;} return Y(u); };
+}
+const E_SETTLE = bez(0.33,0,0.15,1), E_WALK = bez(0.45,0.05,0.25,1), E_STROKE = bez(0.4,0,0.2,1);
+const ease = (t,t0,t1,fn) => fn(seg(t,t0,t1));
+
+// settle-in then lift-out envelope -> alpha
+function envelope(t, inA,inB, outA,outB){
+  if(t < inA) return 0;
+  if(t < inB) return E_SETTLE(seg(t,inA,inB));
+  if(t < outA) return 1;
+  if(t < outB) return 1 - E_SETTLE(seg(t,outA,outB));
+  return 0;
+}
+const _HXC={};
+function hx(h){ if(_HXC[h])return _HXC[h]; const s=h.replace('#',''); return _HXC[h]=[parseInt(s.slice(0,2),16),parseInt(s.slice(2,4),16),parseInt(s.slice(4,6),16)]; }
+function mix(c1,c2,u){ const a=hx(c1),b=hx(c2); return `rgb(${Math.round(lerp(a[0],b[0],u))},${Math.round(lerp(a[1],b[1],u))},${Math.round(lerp(a[2],b[2],u))})`; }
+
+// normalized draw helpers (fractions -> canvas px)
+const X = f => f*W, Y = f => f*H, Sx = f => f*W;
+function dot(fx,fy,fr,fill,alpha){ ctx.globalAlpha=alpha??1; ctx.fillStyle=fill; ctx.beginPath(); ctx.arc(X(fx),Y(fy),Sx(fr),0,7); ctx.fill(); ctx.globalAlpha=1; }
+function line(fx1,fy1,fx2,fy2,color,wpx,alpha,dash){ ctx.globalAlpha=alpha??1; ctx.strokeStyle=color; ctx.lineWidth=wpx*(W/1080); ctx.lineCap='butt'; ctx.setLineDash(dash||[]); ctx.beginPath(); ctx.moveTo(X(fx1),Y(fy1)); ctx.lineTo(X(fx2),Y(fy2)); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
+function text(str,fx,fy,font,color,alpha,align){ if(alpha<=0)return; ctx.globalAlpha=alpha; ctx.fillStyle=color; ctx.font=font; ctx.textAlign=align||'center'; ctx.textBaseline='alphabetic'; ctx.fillText(str,X(fx),Y(fy)); ctx.globalAlpha=1; }
+const px = n => Math.round(n*(W/1080));   // design-px (at 1080) -> canvas px
+
+// quadratic point + partial-draw
+function qpt(p0,pc,p1,u){ const v=1-u; return [v*v*p0[0]+2*v*u*pc[0]+u*u*p1[0], v*v*p0[1]+2*v*u*pc[1]+u*u*p1[1]]; }
+function drawQuad(p0,pc,p1,prog,color,wpx,dash){
+  ctx.strokeStyle=color; ctx.lineWidth=wpx*(W/1080); ctx.setLineDash(dash||[]); ctx.beginPath();
+  const N=40, last=Math.max(1,Math.floor(N*prog));
+  for(let i=0;i<=last;i++){ const u=Math.min(prog,i/N); const p=qpt(p0,pc,p1,u); const x=X(p[0]),y=Y(p[1]); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+
+// ============================================================ state
+let showCaptions = true;
+let cues = [];        // parsed SRT (or built from a storyboard yObj's keyframes)
+let t = 0;            // current time
+let RENDER_MODE = 'seijaku';   // builtin default; a storyboard yObj may set 'composite' or 'puppet'
+let STORY = null, BOOKROOT = '', PUPPETS = [], CAMERA = null;
+const IMG = new Map();          // artifact source path -> loaded HTMLImageElement
+
+// ---- element positions over time ----
+const HALL = []; // 10 seated dots (2 cols x 5 rows)
+for(const x of [0.30,0.70]) for(const y of [0.28,0.36,0.44,0.52,0.60]) HALL.push({x,y});
+const AWAKE_I = 7; // right column (x .70), row 3 (y .44) -> index 5+2 = 7
+const teacherX = 0.485;
+function teacherY(t){ return t<1.0 ? 0.30 : lerp(0.30,0.45, ease(t,1.0,2.4,E_WALK)); }
+function studentPos(t){
+  // beat2 glide .70->.60 (3.0-3.8), beat3 glide .60->.565 (3.8-4.4)
+  let x = 0.70;
+  if(t>=3.0) x = lerp(0.70,0.60, ease(t,3.0,3.8,E_WALK));
+  if(t>=3.8) x = lerp(0.60,0.565, ease(t,3.8,4.4,E_WALK));
+  return {x, y:0.44};
+}
+// stick as base B + tip T; interpolate across beats
+function stick(t){
+  const ty = teacherY(t);
+  let B=[0.51, ty+0.03], T=[0.51, ty+0.03+0.10];      // beats 1-3: vertical, carried
+  if(t>=5.4){ // beat4 raise: loom, tip toward (0.52,0.36)
+    const u = ease(t,5.4,6.0,E_WALK);
+    B=[lerp(0.51,0.49,u), lerp(ty+0.03,0.52,u)];
+    T=[lerp(0.51,0.52,u), lerp(ty+0.13,0.36,u)];
+  }
+  if(t>=8.6){ // beat6: to horizontal in the student's hold
+    const u = ease(t,8.6,9.2,E_WALK);
+    B=[lerp(0.49,0.50,u), lerp(0.52,0.52,u)];
+    T=[lerp(0.52,0.605,u), lerp(0.36,0.52,u)];
+  }
+  return {B,T};
+}
+// the crack polyline (beat 5)
+const CRACK = [[0.62,0.00],[0.55,0.18],[0.63,0.30],[0.48,0.47],[0.56,0.60],[0.42,0.78],[0.50,1.00]];
+// beat-4 double-bind branches (control point, label, label position) — hoisted, constant per frame
+const BRANCHES = [ [[0.30,0.22],'REAL',[0.33,0.27]], [[0.52,0.18],'IMAGINARY',[0.52,0.22]], [[0.76,0.24],'SILENCE',[0.72,0.28]] ];
+const BRANCH_STARTS = [6.0,6.3,6.6];
+
+// ============================================================ render(t)
+function render(t){
+  if(RENDER_MODE==='composite'){ return composite(t); }
+  if(RENDER_MODE==='puppet'){ return puppet(t); }        // puppet tracks are authored in wall time
+  t = t * BASE / DUR;   // wall clock -> authored spine (seijaku): the whole film scales to DUR
+  // inversion flash 7.00-7.08
+  const flash = t>=7.00 && t<7.08;
+  const ground = flash ? C.INK : C.PAPER;
+  const inkc   = flash ? C.PAPER : C.INK;
+  const faintc = flash ? '#c9d2ce' : C.FAINT;
+  ctx.fillStyle = ground; ctx.fillRect(0,0,W,H);
+
+  // ---- hall (dims to faint after rupture; awakened turns blue) ----
+  const hallAlpha = ease(t,0.3,1.7,E_SETTLE);                       // settle in
+  const dim = seg(t,2.8,3.3);                                       // ink->faint
+  const bre = t<2.4 ? (1 + 0.010*0.5*(1-Math.cos(2*Math.PI*(t/2.4)))) : 1; // subtle breath
+  ctx.save(); ctx.translate(X(0.5),Y(0.44)); ctx.scale(bre,bre); ctx.translate(-X(0.5),-Y(0.44));
+  const dimCol = mix(inkc, faintc, dim);   // one colour for every hall dot + the teacher
+  HALL.forEach((d,i)=>{
+    if(i===AWAKE_I) return; // draw awake last
+    dot(d.x,d.y,0.011,dimCol,hallAlpha);
+  });
+  // teacher + stick
+  const tcol = dimCol;
+  dot(teacherX, teacherY(t), 0.016, tcol, hallAlpha);
+  const st = stick(t);
+  let stickCol = tcol;
+  if(t>=8.8) stickCol = mix(tcol, C.ACCENT, seg(t,8.8,9.1));         // turns blue when seized
+  // the snap at 9.25 — the stick breaks
+  drawStick(t, st, stickCol, hallAlpha);
+  ctx.restore();
+
+  // awakened student (blue), moves out of the row
+  const sp = studentPos(t);
+  const stcol = t<2.8 ? mix(inkc,faintc,0) : mix(C.INK, C.ACCENT, seg(t,2.8,3.3));
+  const sr = lerp(0.011,0.013, seg(t,2.8,3.3));
+  dot(sp.x, sp.y, sr, flash?C.PAPER:stcol, hallAlpha);
+
+  // ---- beat 4: the three branches (double-bind) ----
+  if(t>=6.0){
+    const tip = st.T, target=[sp.x,sp.y];
+    BRANCHES.forEach((b,i)=>{
+      const prog = t>=7.0 ? 1 : E_STROKE(seg(t,BRANCH_STARTS[i],BRANCH_STARTS[i]+0.35));  // frozen full after the break
+      if(prog<=0) return;
+      const lift = t>=8.6 ? (1-ease(t,8.6,9.0,E_SETTLE)) : 1;       // branches die in beat6
+      ctx.globalAlpha = lift;
+      drawQuad(tip,b[0],target,prog,C.MUTED,3,[px(6),px(8)]);
+      ctx.globalAlpha = 1;
+      const la = envelope(t, BRANCH_STARTS[i]+0.05, BRANCH_STARTS[i]+0.35, 7.0, 7.0) * lift;
+      text(b[1], b[2][0], b[2][1], `500 ${px(24)}px ${'ui-monospace,monospace'}`, C.MUTED, la);
+    });
+  }
+
+  // ---- beat 5: the crack ----
+  if(t>=7.00){
+    const prog = clamp01((t-7.00)/0.12);
+    let col = C.ACCENT, alpha=1;
+    if(t>=8.0){ col = mix(C.ACCENT, C.ACCENTB, seg(t,8.0,8.5)); alpha = lerp(1,0.15, seg(t,8.0,8.5)); }
+    ctx.strokeStyle=col; ctx.lineWidth=px(6); ctx.lineJoin='miter'; ctx.globalAlpha=alpha; ctx.beginPath();
+    const total=CRACK.length-1, upto=prog*total;
+    for(let i=0;i<CRACK.length;i++){
+      if(i>upto+1) break;
+      const p=CRACK[i]; let x=X(p[0]),y=Y(p[1]);
+      if(i>upto){ const f=upto-(i-1); const a=CRACK[i-1]; x=X(lerp(a[0],p[0],f)); y=Y(lerp(a[1],p[1],f)); }
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  // ---- typography: protocol label (killed at the break) ----
+  if(t<7.00){
+    const a = envelope(t,0.4,1.2, 6.99,7.0);
+    text('KŌAN_01 · THE STICK', 0.5, 0.085, `500 ${px(26)}px ui-monospace,monospace`, C.FAINT, a);
+  }
+  // ---- captions from SRT ----
+  if(showCaptions){
+    for(const c of cues){
+      if(t < c.start || t > c.end) continue;
+      const dur = c.end - c.start;
+      const inB = c.start + Math.min(0.4, dur/3);
+      const outA = c.end - Math.min(0.3, dur/3);
+      const a = envelope(t, c.start, inB, outA, c.end);
+      const isAct = /^[a-z]/.test(c.text.trim());
+      const font = isAct ? `500 ${px(34)}px ui-monospace,monospace`
+                         : `italic 400 ${px(46)}px "Iowan Old Style",Georgia,serif`;
+      text(c.text, 0.5, 0.84, font, flash?C.PAPER:C.INK, a);
+    }
+  }
+  // ---- end label ----
+  if(t>=9.5){
+    const a = envelope(t,9.5,9.9, 11,11);
+    const lbl = '→ THE ACT · breaks it';
+    text(lbl, 0.5, 0.92, `500 ${px(22)}px ui-monospace,monospace`, C.ACCENT, a);
+  }
+}
+
+function drawStick(t, st, col, alpha){
+  const B=st.B, T=st.T;
+  if(t>=9.25){                       // the act: the stick snaps — breaks in two
+    const u = clamp01((t-9.25)/0.06);
+    const mid=[(B[0]+T[0])/2,(B[1]+T[1])/2];
+    const off=0.012*u, dy=0.004*u;
+    segLine([B[0]-off, B[1]+dy], [mid[0]-off*0.4, mid[1]+dy], col, alpha);
+    segLine([mid[0]+off*0.4, mid[1]-dy], [T[0]+off, T[1]-dy], col, alpha);
+    return;
+  }
+  segLine(B,T,col,alpha);
+}
+function segLine(a,b,col,alpha){ line(a[0],a[1],b[0],b[1],col,5,alpha); }
+
+// ============================================================ SRT
+const DEFAULT_SRT = `1
+00:00:04,300 --> 00:00:05,700
+What is real?
+
+2
+00:00:06,400 --> 00:00:07,000
+— I strike you.
+
+3
+00:00:09,200 --> 00:00:10,000
+he takes the stick`;
+function parseTime(s){ const m=s.trim().match(/(\d+):(\d+):(\d+)[,.](\d+)/); if(!m)return 0; return (+m[1])*3600+(+m[2])*60+(+m[3])+(+m[4])/1000; }
+function parseSRT(txt){
+  const out=[]; const blocks=txt.replace(/\r/g,'').split(/\n\s*\n/);
+  for(const b of blocks){ const ls=b.split('\n').filter(x=>x.trim()!==''); if(ls.length<2)continue;
+    let i=0; if(/^\d+$/.test(ls[0].trim())) i=1;
+    const tl=ls[i]; if(!tl||!tl.includes('-->'))continue;
+    const [a,c]=tl.split('-->'); const start=parseTime(a), end=parseTime(c);
+    const text=ls.slice(i+1).join(' ').trim();
+    out.push({start,end,text});
+  }
+  return out;
+}
+
+// ============================================================ audio (generated hirajōshi bowl score)
+let actx=null, master=null, streamDest=null, liveNodes=[];
+function audioInit(){
+  if(actx) return;
+  actx = new (window.AudioContext||window.webkitAudioContext)();
+  const lp = actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=4000;
+  master = actx.createGain(); master.gain.value=0.8;
+  master.connect(lp);
+  streamDest = actx.createMediaStreamDestination();
+  lp.connect(actx.destination); lp.connect(streamDest);
+}
+// one bowl voice
+function bowl(when, freq, peak, atk, dec, wave){
+  const o=actx.createOscillator(); o.type=wave||'sine'; o.frequency.value=freq;
+  const g=actx.createGain(); g.gain.setValueAtTime(0,when); g.gain.linearRampToValueAtTime(peak,when+atk);
+  g.gain.exponentialRampToValueAtTime(0.0001,when+atk+dec);
+  o.connect(g); g.connect(master); o.start(when); o.stop(when+atk+dec+0.1); liveNodes.push(o,g);
+  if(!wave || wave==='sine'){ // inharmonic partials for the bowl
+    [[2.76,0.12],[5.4,0.04]].forEach(([r,amt])=>{
+      const p=actx.createOscillator(); p.type='sine'; p.frequency.value=freq*r;
+      const pg=actx.createGain(); pg.gain.setValueAtTime(0,when); pg.gain.linearRampToValueAtTime(peak*amt,when+atk);
+      pg.gain.exponentialRampToValueAtTime(0.0001,when+atk+dec);
+      p.connect(pg); pg.connect(master); p.start(when); p.stop(when+atk+dec+0.1); liveNodes.push(p,pg);
+    });
+  }
+}
+const SCORE = [ // [time, freq, peak, attack, decay, wave]
+  [0.30,110.00,0.16,0.9,4.5], [2.50,164.81,0.16,0.9,4.5], [3.90,130.81,0.16,0.9,4.5],
+  [5.40,246.94,0.16,0.9,4.5], [6.20,174.61,0.16,0.9,4.5],
+  [7.15,880.00,0.12,0.01,2.5],
+  [8.80,110.00,0.14,1.2,4.2], [8.80,164.81,0.14,1.2,4.2],
+  [9.25,329.63,0.06,0.05,0.5,'triangle'],
+];
+function stopAudio(){ liveNodes.forEach(n=>{try{n.stop&&n.stop();}catch(e){} try{n.disconnect();}catch(e){}}); liveNodes=[]; if(droneNode){try{droneNode.stop();}catch(e){} droneNode=null;} }
+let droneNode=null;
+function startScore(fromT){
+  if(!useMusic()) return;
+  audioInit(); if(actx.state==='suspended') actx.resume();
+  const base = actx.currentTime + 0.06;
+  if(STORY && STORY.music){                                 // score from the storyboard yObj (wall time, no drone)
+    for(const ev of STORY.music){ if(ev[0] < fromT) continue;
+      bowl(base+(ev[0]-fromT), ev[1], ev[2]??0.14, ev[3]??0.6, ev[4]??3.0, ev[5]); }
+    return;
+  }
+  // drone A1 55Hz, dies at the break (7.0)
+  const k = DUR / BASE;   // wall seconds per authored second — scales the score to DUR
+  if(fromT < 7.0*k){
+    const o=actx.createOscillator(); o.type='sine'; o.frequency.value=55;
+    const g=actx.createGain(); g.gain.value=0.025; o.connect(g); g.connect(master);
+    o.start(base); const cut=base+(7.0*k-fromT); g.gain.setValueAtTime(0.025,cut-0.03); g.gain.linearRampToValueAtTime(0,cut); o.stop(cut+0.05);
+    droneNode=o; liveNodes.push(g);
+  }
+  for(const ev of SCORE){ const wt=ev[0]*k; if(wt < fromT) continue; bowl(base+(wt-fromT), ev[1],ev[2],ev[3],ev[4],ev[5]); }
+}
+const useMusic = () => document.getElementById('lyMusic').checked;
+
+// ============================================================ transport
+let playing=false, rafId=null, clockStart=0, clockFromT=0;
+let TRACKW = 0;
+function measureTL(){ const el=document.getElementById('trkV'); if(el) TRACKW=el.clientWidth; }   // width only changes on resize — don't reflow every frame
+function setT(nt){ if(!TRACKW) measureTL(); t=Math.max(0,Math.min(DUR,nt)); render(t); document.getElementById('tnow').textContent=t.toFixed(1); document.getElementById('ph').style.left=(78 + t/DUR*TRACKW)+'px'; }
+function loop(now){
+  if(!playing) return;
+  const el=(now-clockStart)/1000 + clockFromT;
+  if(el>=DUR){
+    if(document.getElementById('loop').checked){         // watch again: restart film + score
+      clockFromT=0; clockStart=now; stopAudio(); startScore(0);
+      setT(0); rafId=requestAnimationFrame(loop); return;
+    }
+    setT(DUR); stop(); return;
+  }
+  setT(el); rafId=requestAnimationFrame(loop);
+}
+function play(){
+  if(playing){ stop(); return; }
+  if(t>=DUR) t=0;
+  playing=true; document.getElementById('play').textContent='❚❚ Pause';
+  clockFromT=t; clockStart=performance.now();
+  startScore(t);
+  rafId=requestAnimationFrame(loop);
+}
+function stop(){ playing=false; document.getElementById('play').textContent='▶ Play'; if(rafId)cancelAnimationFrame(rafId); stopAudio(); }
+
+// ============================================================ record
+let recorder=null, chunks=[], recordings=[], recCount=0;   // recordings: {name,url,size}, held in-tab
+function renderRecList(sel){
+  const out=document.getElementById('out'), ul=document.getElementById('reclist'), pv=document.getElementById('preview');
+  out.hidden = recordings.length===0;
+  ul.innerHTML='';
+  recordings.forEach((r,i)=>{
+    const li=document.createElement('li');
+    const nm=document.createElement('button'); nm.className='nm'; nm.textContent=r.name; nm.title='preview'; nm.onclick=()=>{ pv.src=r.url; };
+    const sz=document.createElement('span'); sz.className='sz'; sz.textContent=(r.size/1048576).toFixed(1)+' MB';
+    const sv=document.createElement('button'); sv.className='sv'; sv.textContent='⇪ Save';
+    sv.title='write the take to the draftbook inbox on disk (works even when the browser has no download manager)';
+    sv.onclick=async()=>{ sv.disabled=true; sv.textContent='saving…';
+      try{
+        const blob=await (await fetch(r.url)).blob();
+        const res=await fetch('/drop/'+encodeURIComponent(r.name),{method:'PUT',body:blob});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const j=await res.json();
+        sv.textContent='saved ✓'; sv.title=j.mp4||j.saved;
+        document.getElementById('recstat').textContent = j.mp4
+          ? 'saved · '+j.mp4+' (MP4 — QuickTime/Instagram-ready) + .webm'
+          : 'saved · '+j.saved+' (WebM — install ffmpeg for auto-MP4)';
+      }catch(e){ sv.disabled=false; sv.textContent='⇪ Save';
+        document.getElementById('recstat').textContent='save failed ('+e.message+') — serve with scripts/serve.py, or use ↓ Download in a regular browser'; }
+    };
+    const dl=document.createElement('a'); dl.className='dl'; dl.textContent='↓ Download'; dl.href=r.url; dl.download=r.name;
+    dl.title='browser download — needs a real browser; the app pane has no download manager (use ⇪ Save there)';
+    const del=document.createElement('button'); del.className='del'; del.textContent='✕ Delete';
+    del.onclick=()=>{ URL.revokeObjectURL(r.url); recordings.splice(i,1); if(pv.getAttribute('src')===r.url) pv.removeAttribute('src'); renderRecList(); };
+    li.append(nm,sz,sv,dl,del); ul.appendChild(li);
+  });
+  if(sel!=null && recordings[sel]){ pv.src=recordings[sel].url; ul.scrollIntoView({behavior:'smooth',block:'center'}); }
+}
+async function record(){
+  const btn=document.getElementById('rec'), stat=document.getElementById('recstat');
+  if(recorder && recorder.state==='recording'){ recorder.stop(); return; }
+  stop(); setT(0); audioInit(); if(actx.state==='suspended') await actx.resume();
+  const vstream = cv.captureStream(30);
+  const tracks = [...vstream.getVideoTracks(), ...(useMusic()? streamDest.stream.getAudioTracks():[])];
+  const stream = new MediaStream(tracks);
+  const mime = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m))||'video/webm';
+  chunks=[]; recorder=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:6_000_000});
+  recorder.ondataavailable=e=>{ if(e.data.size) chunks.push(e.data); };
+  recorder.onstop=()=>{
+    const blob=new Blob(chunks,{type:'video/webm'});
+    recCount++;
+    const base=(STORY&&STORY.name)||'short';
+    recordings.push({name:base+'-'+recCount+'.webm', url:URL.createObjectURL(blob), size:blob.size});
+    renderRecList(recordings.length-1);
+    stat.textContent='done · '+recordings.length+' recording'+(recordings.length===1?'':'s');
+    btn.textContent='● Record '+Math.round(DUR)+'s'; btn.classList.add('rec');
+  };
+  // roll: play from 0, schedule audio, drive canvas; stop at DUR
+  recorder.start();
+  btn.textContent='■ Stop'; stat.textContent='recording…';
+  playing=true; clockFromT=0; clockStart=performance.now(); startScore(0);
+  document.getElementById('play').textContent='❚❚ Pause';
+  const recLoop=now=>{
+    if(!playing){ return; }
+    const el=(now-clockStart)/1000;
+    if(el>=DUR){ setT(DUR); playing=false; document.getElementById('play').textContent='▶ Play'; stopAudio(); if(recorder.state==='recording')recorder.stop(); return; }
+    setT(el); requestAnimationFrame(recLoop);
+  };
+  requestAnimationFrame(recLoop);
+}
+
+// ============================================================ timeline UI
+function buildTimeline(){
+  const ruler=document.getElementById('ruler'); ruler.innerHTML='';
+  const step = DUR>12?2:1;
+  for(let s=0;s<=DUR;s+=step){ const d=document.createElement('div'); d.className='tick'; d.style.left=(s/DUR*100)+'%'; d.textContent=s+'s'; ruler.appendChild(d); }
+  // beat markers
+  if(RENDER_MODE==='seijaku') [0,2.4,3.8,5.2,7.0,8.6].forEach(b=>{ const m=document.createElement('div'); m.className='beatmark'; m.style.left=(b/BASE*100)+'%'; ruler.appendChild(m); });
+  clip('trkV',0,DUR, STORY ? (STORY.style||STORY.render)+' — '+((STORY.keyframes||[]).length)+' beats' : 'SEIJAKU CUT — 6 beats','ink');
+  clip('trkM',0,DUR, STORY&&STORY.music ? 'score · '+STORY.music.length+' events (from the yObj)' : 'hirajōshi bowls + drone','');
+  refreshCaptionClips();
+}
+function clip(track,a,b,label,cls){ const t=document.getElementById(track); const el=document.createElement('div'); el.className='clip'+(cls?' '+cls:''); el.style.left=(a/DUR*100)+'%'; el.style.width=((b-a)/DUR*100)+'%'; el.textContent=label; el.title=label+`  [${a.toFixed(1)}–${b.toFixed(1)}s]`; t.appendChild(el); }
+function refreshCaptionClips(){ const t=document.getElementById('trkC'); const w=(RENDER_MODE==='seijaku')?DUR/BASE:1; t.innerHTML=''; cues.forEach(c=>clip('trkC',c.start*w,c.end*w,c.text,'')); }
+document.getElementById('ruler').addEventListener('click',e=>{ const r=e.currentTarget.getBoundingClientRect(); setT((e.clientX-r.left)/r.width*DUR); });
+// allow scrub across the whole timeline wrap
+document.querySelector('.tlwrap').addEventListener('click',e=>{
+  const trk=document.getElementById('trkV').getBoundingClientRect();
+  if(e.clientX<trk.left) return; setT(clamp01((e.clientX-trk.left)/trk.width)*DUR);
+});
+
+// ============================================================ wire up
+document.getElementById('play').onclick=play;
+document.getElementById('rec').onclick=record;
+document.getElementById('lyCap').onchange=e=>{ showCaptions=e.target.checked; render(t); };
+document.getElementById('lyMusic').onchange=()=>{ if(playing){ stopAudio(); startScore(t);} };
+const srtEl=document.getElementById('srt'); srtEl.value=DEFAULT_SRT;
+srtEl.addEventListener('input',()=>{ cues=parseSRT(srtEl.value); refreshCaptionClips(); render(t); });
+document.getElementById('ighint').innerHTML='Recordings are held in this tab (WebM) — download the ones you want to keep. Instagram prefers MP4/H.264, so convert (e.g. ffmpeg) before uploading; posting cannot be automated from a page.';
+
+// ============================================================ composite renderer (artifact-driven)
+// Draws the artifacts a storyboard yObj references, per keyframe, onto the 9:16 canvas.
+function coverFit(iw,ih){ const cr=W/H, ir=iw/ih; let w,h; if(ir>cr){h=H;w=H*ir;}else{w=W;h=W/ir;} return [(W-w)/2,(H-h)/2,w,h]; }
+function composite(t){
+  ctx.fillStyle=C.PAPER; ctx.fillRect(0,0,W,H);
+  const kfs=(STORY&&STORY.keyframes)||[];
+  for(const k of kfs){
+    if(t<k.start||t>k.end) continue;
+    const dur=k.end-k.start;
+    // transition envelope: fade/dissolve ease in+out; cut/hold = full for the window
+    let a=1;
+    if(k.transition==='fade'||k.transition==='dissolve'){
+      const f=Math.min(0.5,dur/3); a=envelope(t,k.start,k.start+f,k.end-f,k.end);
+    }
+    for(const path of (k.shows||[])){
+      const img=IMG.get(path);
+      if(img && img.complete && img.naturalWidth){
+        const [x,y,w,h]=coverFit(img.naturalWidth,img.naturalHeight);
+        ctx.globalAlpha=a; ctx.drawImage(img,x,y,w,h); ctx.globalAlpha=1;
+      }
+    }
+    text((k.beat||''),0.5,0.085,`500 ${px(22)}px ui-monospace,monospace`,C.ACCENT,a*0.9);
+  }
+  if(showCaptions){                       // captions come from `cues` -> the SRT editor stays live in composite mode
+    for(const c of cues){
+      if(t<c.start||t>c.end) continue;
+      const d=c.end-c.start, f=Math.min(0.4,d/3);
+      const al=envelope(t,c.start,c.start+f,c.end-f,c.end);
+      const isAct=/^[a-z]/.test(c.text.trim());
+      const font=isAct?`500 ${px(34)}px ui-monospace,monospace`:`italic 400 ${px(46)}px "Iowan Old Style",Georgia,serif`;
+      ctx.globalAlpha=al*0.86; ctx.fillStyle=C.PAPER; ctx.fillRect(0,Y(0.80),W,Y(0.10)); ctx.globalAlpha=1;
+      text(c.text,0.5,0.865,font,C.INK,al);
+    }
+  }
+}
+
+// ============================================================ puppet renderer (artifacts as articulated parts)
+const sm = u => u<=0?0:u>=1?1:u*u*u*(u*(u*6-15)+10);       // smootherstep — flowing, zero accel at the ends
+function trackState(tr, t){
+  if(t<=tr[0].t) return tr[0];
+  for(let i=1;i<tr.length;i++){
+    if(t<=tr[i].t){
+      const a=tr[i-1], b=tr[i], u=sm((t-a.t)/(b.t-a.t||1e-6));
+      return { x:lerp(a.x,b.x,u), y:lerp(a.y,b.y,u), r:lerp(a.r,b.r,u), s:lerp(a.s,b.s,u), o:lerp(a.o,b.o,u),
+               zoom:lerp(a.zoom??1,b.zoom??1,u) };
+    }
+  }
+  return tr[tr.length-1];
+}
+const VOICE_COL = { student:'#2743E0', teacher:'#D95D39', narrator:'#1B1B1B' };
+function drawBubble(c, t, cam){
+  const d=c.end-c.start, f=Math.min(0.35, d/3);
+  const al=envelope(t, c.start, c.start+f, c.end-f, c.end); if(al<=0) return;
+  const lines=c.text.split('\n');
+  const isN=!c.voice || c.voice==='narrator';
+  ctx.font = isN ? `500 ${px(30)}px ui-monospace,monospace`
+                 : `700 ${px(34)}px -apple-system,'SF Pro Display',sans-serif`;
+  const lh=px(46), bw=Math.max(...lines.map(l=>ctx.measureText(l).width))+px(56), bh=lines.length*lh+px(26);
+  const pos=c.at||[0.5,0.86];
+  let ax=X(pos[0]), ay=Y(pos[1]);
+  if(cam){ ax=(ax-X(cam.x))*cam.zoom + W*0.5; ay=(ay-Y(cam.y))*cam.zoom + H*0.5; }
+  const bx=Math.max(px(14), Math.min(W-bw-px(14), ax-bw/2)), by=Math.max(px(14), Math.min(H-bh-px(14), ay-bh/2));
+  const col=VOICE_COL[c.voice]||VOICE_COL.narrator;
+  ctx.globalAlpha=al*0.94; ctx.fillStyle='#FFFFFF';
+  ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,px(18)); ctx.fill();
+  ctx.globalAlpha=al; ctx.lineWidth=px(4); ctx.strokeStyle=col; ctx.stroke();
+  ctx.fillStyle='#1B1B1B'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  lines.forEach((l,i)=>ctx.fillText(l, bx+bw/2, by+px(13)+lh*(i+0.5)));
+  ctx.globalAlpha=1; ctx.textBaseline='alphabetic';
+}
+function puppet(t){
+  ctx.fillStyle='#0E1030'; ctx.fillRect(0,0,W,H);
+  const cam = CAMERA ? trackState(CAMERA, t) : {x:0.5,y:0.5,zoom:1};
+  let sx=0, sy=0;                                           // deterministic camera shake (scrub-safe)
+  for(const sh of (STORY.shakes||[])) if(t>=sh.start && t<=sh.end){ sx=Math.sin(t*151.7)*sh.amp*W; sy=Math.cos(t*173.3)*sh.amp*H; }
+  ctx.save(); ctx.translate(sx,sy);
+  ctx.translate(W*0.5 - X(cam.x)*cam.zoom, H*0.5 - Y(cam.y)*cam.zoom); ctx.scale(cam.zoom,cam.zoom);
+  for(const p of PUPPETS){
+    const img=IMG.get(p.artifact); if(!img || !img.naturalWidth) continue;
+    const st=trackState(p.track, t); if(st.o<=0.004) continue;
+    let r=st.r, yy=st.y;
+    if(p.sway){ const v=Math.sin(2*Math.PI*t/p.sway.period + p.phase); if(p.sway.rot) r+=v*p.sway.amp; else yy+=v*p.sway.amp; }
+    const dw=st.s*p.w*W, dh=dw*img.naturalHeight/img.naturalWidth;
+    ctx.save(); ctx.globalAlpha=st.o; ctx.translate(X(st.x),Y(yy)); if(r) ctx.rotate(r*Math.PI/180);
+    ctx.drawImage(img, -(p.cx??0.5)*dw, -(p.cy??0.5)*dh, dw, dh); ctx.restore();
+  }
+  ctx.restore();
+  // dialogue rides the camera anchor but stays crisp at screen scale
+  if(showCaptions) for(const c of cues){ if(t>=c.start && t<=c.end) drawBubble(c,t,cam); }
+  const k=(STORY.keyframes||[]).find(k=>t>=k.start && t<=k.end);
+  if(k && k.beat) text(k.beat, 0.5, 0.045, `600 ${px(22)}px ui-monospace,monospace`, '#F4A62A', 0.9);
+}
+
+// ============================================================ caption languages (from the yObj's i18n maps)
+const LANG_NAMES = { en:'English', ja:'日本語', zh:'中文', ta:'தமிழ்', es:'Español', de:'Deutsch' };
+let LANG = 'en';
+function setLang(l){
+  LANG = l;
+  cues=((STORY&&STORY.keyframes)||[]).filter(k=>k.caption).map(k=>({ start:k.start, end:k.end,
+    text:(l!=='en' && k.i18n && k.i18n[l]) || k.caption, at:k.at, voice:k.voice }));
+  document.getElementById('srt').value=cues.map((c,i)=>`${i+1}\n${srtT(c.start)} --> ${srtT(c.end)}\n${c.text}`).join('\n\n');
+  refreshCaptionClips(); render(t);
+}
+
+// ============================================================ storyboard yObj loader (?story=<url>)
+async function loadStory(url){
+  const res=await fetch(url); STORY=await res.json();
+  BOOKROOT=url.slice(0,url.indexOf('/objects/')+1);   // draftbook root that serves files/
+  DUR=STORY.duration||DUR;
+  RENDER_MODE=(STORY.render==='seijaku')?'seijaku':(STORY.render==='puppet'?'puppet':'composite');
+  document.querySelector('.top .t').innerHTML='<em>'+(STORY.label||STORY.name||'storyboard')+'</em>';
+  // captions come from the yObj keyframes (SRT becomes a live-edit override only);
+  // the language menu builds itself from whatever i18n keys the yObj carries
+  const langs=[...new Set((STORY.keyframes||[]).flatMap(k=>Object.keys(k.i18n||{})))];
+  const sel=document.getElementById('lang');
+  sel.innerHTML=['en',...langs].map(l=>`<option value="${l}">${LANG_NAMES[l]||l}</option>`).join('');
+  sel.onchange=e=>setLang(e.target.value);
+  document.getElementById('langRow').hidden = langs.length===0;
+  setLang('en');
+  // normalize puppet tracks: missing props carry forward from the previous key; draw order by z
+  PUPPETS=(STORY.puppets||[]).map((p,i)=>{
+    let prev=Object.assign({x:.5,y:.5,r:0,s:1,o:1},(p.track&&p.track[0])||{});
+    const track=(p.track||[{t:0}]).map(k=>{ prev=Object.assign({},prev,k); return Object.assign({},prev); });
+    return Object.assign({},p,{track, phase:i*1.73});
+  }).sort((a,b)=>(a.z||0)-(b.z||0));
+  CAMERA=null;
+  if(STORY.camera && STORY.camera.length){                  // normalize the camera track (carry-forward)
+    let prev=Object.assign({x:.5,y:.5,zoom:1},STORY.camera[0]);
+    CAMERA=STORY.camera.map(k=>{ prev=Object.assign({},prev,k); return Object.assign({},prev); });
+  }
+  // preload referenced image artifacts: yObj -> extra_metadata.source -> file bytes
+  if(RENDER_MODE!=='seijaku'){
+    const paths=[...new Set([...(STORY.keyframes||[]).flatMap(k=>k.shows||[]), ...PUPPETS.map(p=>p.artifact)])];
+    await Promise.all(paths.map(async p=>{
+      try{ const o=await (await fetch(BOOKROOT+p)).json();
+        const src=(o.extra_metadata&&o.extra_metadata.source)||o.source||o.thumbnail;
+        if(src && (o.ytype||'').includes('image')){ const im=new Image(); im.src=BOOKROOT+src; IMG.set(p,im);
+          await new Promise(r=>{im.onload=r; im.onerror=r;}); }
+      }catch(e){}
+    }));
+  }
+}
+function srtT(s){ const ms=Math.round((s%1)*1000), sec=Math.floor(s)%60, mn=Math.floor(s/60)%60, hr=Math.floor(s/3600);
+  const p=(n,l=2)=>String(n).padStart(l,'0'); return `${p(hr)}:${p(mn)}:${p(sec)},${p(ms,3)}`; }
+
+// ============================================================ boot
+function syncDur(){
+  document.querySelector('.clock').innerHTML='<b id="tnow">0.0</b> / '+DUR.toFixed(1)+'s';
+  const rb=document.getElementById('rec'); if(rb) rb.textContent='● Record '+Math.round(DUR)+'s';
+  const meta=document.querySelector('.top .meta');
+  if(meta) meta.innerHTML=(((STORY&&STORY.style)||'SEIJAKU CUT'))+' · <b>'+DUR.toFixed(1)+'s</b> · '+(((STORY&&STORY.aspect)||'9:16'))+'<br>visual language · Fable · build · Opus';
+}
+// player view (?view=player): fullscreen reel on loop — the default view a public
+// mnembyte URL loads. A hidden menu (scroll up / the ⌄ handle) reaches the host,
+// the user, the folder — mnembyte provides the URL; the reel is the media.
+function playerSetup(){
+  document.body.classList.add('playerview');
+  const pub=(STORY&&STORY.publish)||{};
+  const host=pub.host||'mnembyte.net', user=pub.user||'', folder=pub.folder||'';
+  const nm=(pub.name||(STORY&&STORY.name)||'reel')+'.yobj';
+  document.getElementById('pmenu').innerHTML=
+    `<a href="https://${host}/">${host}</a> / <a href="https://${host}/${user}/">${user}</a> / `+
+    `<a href="https://${host}/${user}/${folder}/">${folder}</a> / <b>${nm}</b>`+
+    `<div class="dim">public media reference · rendered live from the storyboard yObj · made with mnem<br>tap the reel for sound · scroll down to close this menu</div>`;
+  const menu=document.getElementById('pmenu');
+  document.getElementById('phandle').onclick=()=>menu.classList.toggle('open');
+  window.addEventListener('wheel',e=>{ if(e.deltaY<-16) menu.classList.add('open'); else if(e.deltaY>16) menu.classList.remove('open'); });
+  document.getElementById('loop').checked=true;
+  document.getElementById('lyMusic').checked=false;         // autoplay policy: start silent
+  cv.addEventListener('click',()=>{
+    const m=document.getElementById('lyMusic');
+    if(!m.checked){ m.checked=true; if(playing){ stopAudio(); startScore(t); } else play(); }
+    else play();                                            // further taps = play/pause
+  });
+  play();
+}
+const BOOT_PARAMS=new URLSearchParams(location.search);
+const STORY_URL=BOOT_PARAMS.get('story');
+if(STORY_URL){
+  loadStory(STORY_URL).catch(e=>console.error('story load failed',e)).finally(()=>{
+    syncDur(); buildTimeline(); setT(0);
+    if(BOOT_PARAMS.get('view')==='player') playerSetup();
+  });
+}else{
+  cues=parseSRT(DEFAULT_SRT); syncDur(); buildTimeline(); setT(0);
+}
+window.addEventListener('resize',()=>{ measureTL(); setT(t); });
+</script>
+</body>
+</html>

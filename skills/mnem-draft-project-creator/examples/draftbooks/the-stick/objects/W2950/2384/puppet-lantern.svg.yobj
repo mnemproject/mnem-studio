@@ -1,0 +1,29 @@
+{
+  "ytype": "/ytypes/image/",
+  "ytype_label": "Image",
+  "name": "puppet-lantern",
+  "label": "puppet lantern",
+  "description": "image artifact preserved into the draftbook",
+  "license": "CC0-1.0",
+  "provenance": {
+    "native_path": "/path/to/source-material/puppets/lantern.svg",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/puppet-lantern.svg",
+    "kuri": "blake2b://180ed83015a10e994f35b570b85222ae13ac63e0fd5e37aa5f239869dc2bdced"
+  },
+  "dimensions": {
+    "width": 120,
+    "height": 170
+  },
+  "thumbnail": "files/W2950/2384/puppet-lantern.svg"
+}

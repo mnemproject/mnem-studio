@@ -1,0 +1,19 @@
+{
+  "title": "The Stick",
+  "subtitle": "A monastery, a double-bind, and the beat where the story breaks.",
+  "duration": 20.0,
+  "aspect": "9:16",
+  "render": "seijaku",
+  "style": "SEIJAKU CUT",
+  "keyframes": [
+    { "seq": 1, "start": 0.0, "end": 2.4, "beat": "SETTING", "transition": "fade",
+      "caption": "", "shows": ["objects/W2950/2384/the-stick-static-render.html.yobj"] },
+    { "seq": 2, "start": 2.4, "end": 3.8, "beat": "RUPTURE", "transition": "hold",
+      "shows": ["objects/W2950/2384/blue-stroke.png.yobj"] },
+    { "seq": 3, "start": 3.8, "end": 5.2, "beat": "CLAIM", "transition": "hold", "caption": "What is real?" },
+    { "seq": 4, "start": 5.2, "end": 7.0, "beat": "DOUBLE-BIND", "transition": "hold", "caption": "— I strike you." },
+    { "seq": 5, "start": 7.0, "end": 8.6, "beat": "THE-BREAK", "transition": "cut", "builtin": "seijaku:fracture" },
+    { "seq": 6, "start": 8.6, "end": 10.0, "beat": "THE-ACT", "transition": "hold", "caption": "he takes the stick",
+      "shows": ["objects/W2950/2384/zen-koan-collection-source.url.yobj"] }
+  ]
+}

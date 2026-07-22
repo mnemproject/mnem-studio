@@ -1,0 +1,19 @@
+[project]
+name = "mnem-localdev"
+version = "1.0.0"
+description = "Portable, chain-free local dev stack that serves a mnem app's databook (yObjs) off the local filesystem."
+readme = "README.md"
+requires-python = ">=3.8"
+# The ONLY runtime dependency: blake3 — the same content-address hash the mnem platform uses, so kuris
+# match byte-for-byte. Everything else is the Python standard library.
+dependencies = ["blake3>=0.3"]
+
+[project.scripts]
+localdev = "mnem_localdev.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mnem_localdev"]

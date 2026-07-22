@@ -1,0 +1,22 @@
+{
+  "ytype": "/ytypes/url/",
+  "ytype_label": "Url",
+  "name": "zen-koan-collection-source",
+  "label": "Zen koan collection (source)",
+  "description": "archived web link",
+  "url": "https://terebess.hu/english/zen.html",
+  "license": "fair-use / source",
+  "provenance": {
+    "source_url": "https://terebess.hu/english/zen.html",
+    "source_medium": "storage/2f/fa/ac6e0f08-7a5a-4116-b855-3c9f6bbee7d8.yobj",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/2f/fa/ac6e0f08-7a5a-4116-b855-3c9f6bbee7d8.yobj"
+    }
+  ],
+  "extra_metadata": {}
+}

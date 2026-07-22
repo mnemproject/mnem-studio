@@ -1,0 +1,29 @@
+{
+  "ytype": "/ytypes/image/",
+  "ytype_label": "Image",
+  "name": "puppet-teacher-body",
+  "label": "puppet teacher-body",
+  "description": "image artifact preserved into the draftbook",
+  "license": "CC0-1.0",
+  "provenance": {
+    "native_path": "/path/to/source-material/puppets/teacher-body.svg",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/puppet-teacher-body.svg",
+    "kuri": "blake2b://a4ab38fe7910c0d6b584b3d0833e966a2f48b52aa4f834e77e974e307257ff2b"
+  },
+  "dimensions": {
+    "width": 240,
+    "height": 420
+  },
+  "thumbnail": "files/W2950/2384/puppet-teacher-body.svg"
+}

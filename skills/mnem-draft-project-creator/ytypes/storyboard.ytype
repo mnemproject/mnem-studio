@@ -1,0 +1,66 @@
+{
+  "$schema": "https://yettagam.net/ytype/1.0.0/schema.json",
+  "$version": "1.0.0",
+  "$role": "type-definition",
+  "name": "storyboard",
+  "label": "Storyboard",
+  "description": "A time-ordered keyframe track that composes archived artifacts into a short. Keyframes are the type (SRT/cue-inspired): each carries a time window, a beat, an optional caption + transition, and logical references to the artifact yObjs it shows. The renderer (video maker) reads this yObj; the artifacts it points at are preserved in the same book.",
+  "kind": "concrete",
+  "final": false,
+  "singleton": false,
+  "inherits_from": ["/ytypes/base/"],
+  "definition": {},
+  "schema": {
+    "type": "object",
+    "properties": {
+      "duration": { "type": "number", "description": "total seconds" },
+      "aspect": { "type": "string", "description": "e.g. 9:16" },
+      "render": { "type": "string", "description": "renderer hint: 'composite' (default, composes the artifacts) or a builtin id e.g. 'seijaku'" },
+      "style": { "type": "string", "description": "named visual language (e.g. SEIJAKU CUT)" },
+      "puppets": {
+        "type": "array",
+        "description": "puppet-render layer: articulable parts, each an accessioned artifact moved on a keyframed transform track",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "artifact": { "type": "string", "description": "logical LBFS path to the artifact yObj (never a physical URL)" },
+            "w": { "type": "number", "description": "drawn width as a fraction of frame width" },
+            "cx": { "type": "number" }, "cy": { "type": "number" },
+            "z": { "type": "number" },
+            "sway": { "type": "object", "description": "ambient oscillation {amp, period, rot}" },
+            "track": { "type": "array", "description": "keyframes {t,x,y,r,s,o}; missing props carry forward" }
+          },
+          "required": ["id", "artifact", "track"]
+        }
+      },
+      "shakes": { "type": "array", "description": "camera shakes [{start,end,amp}]" },
+      "camera": { "type": "array", "description": "camera keyframes [{t,x,y,zoom}] — push-ins, pull-outs; carry-forward like puppet tracks" },
+      "publish": { "type": "object", "description": "public-reference address {host, user, folder, name} — e.g. mnembyte.net/<user>/<folder>/<name>.yobj; the host provides the URL, the reel is the media it references" },
+      "music": { "type": "array", "description": "wall-time synth events [t, freqHz, peak, attack, decay, wave?]" },
+      "keyframes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "seq": { "type": "integer" },
+            "start": { "type": "number", "description": "seconds" },
+            "end": { "type": "number", "description": "seconds" },
+            "beat": { "type": "string", "description": "beat label, e.g. SETTING / THE-ACT" },
+            "caption": { "type": "string" },
+            "i18n": { "type": "object", "description": "caption translations keyed by language code (ja, zh, ta, es, de, …)" },
+            "transition": { "type": "string", "enum": ["cut", "fade", "dissolve", "hold"], "description": "how this keyframe enters" },
+            "builtin": { "type": "string", "description": "optional builtin vector beat, e.g. 'seijaku:fracture'" },
+            "shows": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "logical LBFS paths to the artifact yObjs this keyframe displays (never physical URLs)"
+            }
+          },
+          "required": ["seq", "start", "end"]
+        }
+      }
+    },
+    "required": ["duration", "keyframes"]
+  }
+}

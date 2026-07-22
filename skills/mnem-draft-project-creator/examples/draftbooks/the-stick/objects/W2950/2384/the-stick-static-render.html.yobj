@@ -1,0 +1,24 @@
+{
+  "ytype": "/ytypes/document/",
+  "ytype_label": "Document",
+  "name": "the-stick-static-render",
+  "label": "The Stick — static render",
+  "description": "text artifact preserved into the draftbook",
+  "license": "CC-BY-4.0",
+  "provenance": {
+    "native_path": "sources/the-stick-static-render.html",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/2f/fa/ac6e0f08-7a5a-4116-b855-3c9f6bbee7d8.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/2f/fa/ac6e0f08-7a5a-4116-b855-3c9f6bbee7d8.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/the-stick-static-render.html",
+    "kuri": "blake2b://22d0cfe6248252f9a3d70f3d5b429a50d7c7405d93a90857f7f678c0666df3c2"
+  }
+}

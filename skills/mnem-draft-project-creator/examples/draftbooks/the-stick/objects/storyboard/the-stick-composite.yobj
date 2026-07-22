@@ -1,0 +1,41 @@
+{
+  "ytype": "/.ytypes/storyboard/",
+  "ytype_label": "Storyboard",
+  "name": "the-stick-composite",
+  "label": "The Stick — composite demo",
+  "description": "a keyframe storyboard",
+  "duration": 6.0,
+  "aspect": "9:16",
+  "render": "composite",
+  "style": "",
+  "keyframes": [
+    {
+      "seq": 1,
+      "start": 0.0,
+      "end": 3.0,
+      "beat": "ARTIFACT",
+      "transition": "fade",
+      "caption": "a preserved artifact",
+      "shows": [
+        "objects/W2950/2384/blue-stroke.png.yobj"
+      ]
+    },
+    {
+      "seq": 2,
+      "start": 3.0,
+      "end": 6.0,
+      "beat": "CAPTION",
+      "transition": "dissolve",
+      "caption": "composited by keyframe",
+      "shows": [
+        "objects/W2950/2384/blue-stroke.png.yobj"
+      ]
+    }
+  ],
+  "graph": [
+    {
+      "predicate": "part:hasComponent",
+      "yobj": "objects/W2950/2384/blue-stroke.png.yobj"
+    }
+  ]
+}

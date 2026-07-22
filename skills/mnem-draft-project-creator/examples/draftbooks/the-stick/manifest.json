@@ -1,0 +1,13 @@
+{
+  "book_uuid": "e7ff2721-9a5e-404b-90ac-0fb7cf241f52",
+  "name": "the-stick",
+  "label": "The Stick",
+  "created_at": "2026-07-22T09:37:48Z",
+  "yff": "YFF-1",
+  "root_kuri": "blake2b://pending",
+  "channel_config": {
+    "index": null,
+    "media": null
+  },
+  "note": "Local draftbook \u2014 mirrors a remote mnem archive's structure. Port via fork -> stage -> publish; root_kuri is derived then."
+}

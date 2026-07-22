@@ -1,0 +1,29 @@
+{
+  "ytype": "/ytypes/image/",
+  "ytype_label": "Image",
+  "name": "puppet-teacher-arm",
+  "label": "puppet teacher-arm",
+  "description": "image artifact preserved into the draftbook",
+  "license": "CC0-1.0",
+  "provenance": {
+    "native_path": "/path/to/source-material/puppets/teacher-arm.svg",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/puppet-teacher-arm.svg",
+    "kuri": "blake2b://6d44acac8acdcfcc7fc1c847caaee4fa75509e19951c0d8f7a1cd986797fc253"
+  },
+  "dimensions": {
+    "width": 200,
+    "height": 80
+  },
+  "thumbnail": "files/W2950/2384/puppet-teacher-arm.svg"
+}

@@ -1,0 +1,29 @@
+{
+  "ytype": "/ytypes/image/",
+  "ytype_label": "Image",
+  "name": "puppet-stick",
+  "label": "puppet stick",
+  "description": "image artifact preserved into the draftbook",
+  "license": "CC0-1.0",
+  "provenance": {
+    "native_path": "/path/to/source-material/puppets/stick.svg",
+    "retrieved_at": "2026-07-22",
+    "accessioned_by": "mnem-draft-project-creator",
+    "source_medium": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+  },
+  "graph": [
+    {
+      "predicate": "axiom:derivedFrom",
+      "yobj": "storage/12/60/917f9090-265d-4d15-b4b1-0cf61795ea69.yobj"
+    }
+  ],
+  "extra_metadata": {
+    "source": "files/W2950/2384/puppet-stick.svg",
+    "kuri": "blake2b://61f67fa92d6257a888aaf808165a2a78c02286ed037f8c6d2355e34fae4b38d5"
+  },
+  "dimensions": {
+    "width": 300,
+    "height": 26
+  },
+  "thumbnail": "files/W2950/2384/puppet-stick.svg"
+}

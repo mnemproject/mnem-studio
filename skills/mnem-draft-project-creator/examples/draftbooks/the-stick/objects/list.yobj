@@ -1,0 +1,8 @@
+{
+  "ytype": "/ytypes/list/",
+  "ytype_label": "List",
+  "name": "the-stick",
+  "label": "The Stick",
+  "description": "root of the draftbook",
+  "graph": []
+}

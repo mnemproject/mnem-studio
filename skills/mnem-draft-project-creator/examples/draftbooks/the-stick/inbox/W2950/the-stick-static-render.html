@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Stick — storyboard (draft)</title>
+<style>
+  /* ============================================ mnem — round 3e / instrument
+     A storyboard is a yType (Storyboard → StoryPanel[]); this page is its
+     mnem-front-end rendering. Flat editorial: white ground, ink rules,
+     electric-blue accent, square corners, zero shadow. Three voices —
+     grotesque display / text serif / mono protocol.
+     Ink idiom: solid = built · dotted = flexible · ghost blue = latent. */
+  :root {
+    --white:#ffffff; --paper:#f4f7f5; --ink:#101a1c; --ink-muted:#4d5b56;
+    --ink-faint:#8b968f; --line:#dfe6e2; --rule:#101a1c; --accent:#1717f4;
+    --accent-deep:#1111e8; --accent-wash:rgba(23,23,244,0.06);
+    --display:"SF Pro Display",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --serif:"Iowan Old Style",Palatino,Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body {
+    font-family:var(--serif); color:var(--ink); background:var(--white);
+    font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 28px; }
+  .bar { height:3px; background:var(--rule); }
+  .bar.thin { height:1px; background:var(--line); }
+  .bar.electric { background:var(--accent); }
+
+  /* nav / crumb */
+  .nav { display:flex; align-items:flex-start; justify-content:space-between; padding:22px 0 18px; }
+  .crumb { font-family:var(--display); font-size:14px; color:var(--ink-muted); }
+  .crumb b { font-weight:600; color:var(--ink); }
+  .crumb .arr { color:var(--accent); padding:0 6px; }
+  .nav .co { text-align:right; font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); line-height:1.7; }
+  .nav .co b { color:var(--accent); font-weight:500; }
+
+  /* header */
+  .head { padding:40px 0 0; }
+  .kicker { font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  h1 { font-family:var(--display); font-weight:800; font-size:clamp(44px,8.2vw,96px);
+       line-height:.98; letter-spacing:-.035em; margin:18px 0 0; color:var(--ink); }
+  .sub { font-family:var(--serif); font-size:20px; line-height:1.5; color:var(--ink-muted); max-width:52ch; margin:22px 0 0; }
+  .chips { margin:26px 0 0; display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:inline-block; font-family:var(--display); font-weight:600; font-size:13px;
+          padding:3px 9px; background:var(--accent); color:#f0f2ff; }
+  .chip.ghost { background:var(--accent-wash); color:var(--accent-deep); }
+  .chip.inkline { background:var(--white); color:var(--ink); border:1px solid var(--ink); }
+
+  /* the spine — metarium timeline */
+  .field { position:relative; height:150px; margin:44px 0 0; overflow:hidden;
+    background:repeating-linear-gradient(90deg,transparent 0 54px,rgba(23,23,244,0.05) 54px 55px),var(--white); }
+  .field svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .field .glyph { position:absolute; left:0; top:16px; font-family:var(--mono); font-size:12px; color:var(--ink-muted); }
+  .field .glyph b { color:var(--accent-deep); font-weight:500; }
+
+  /* section head */
+  .shead { display:flex; align-items:baseline; gap:18px; padding:18px 0 0; }
+  .shead .no { font-family:var(--mono); font-size:13px; color:var(--accent); }
+  .shead h2 { font-family:var(--display); font-weight:700; font-size:clamp(24px,3.2vw,34px);
+              letter-spacing:-.025em; margin:0; color:var(--ink); }
+  .shead .side { margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--ink-faint); }
+
+  /* panels */
+  .panels { padding:8px 0 0; }
+  .panel { display:grid; grid-template-columns:88px 96px 1fr; gap:22px; align-items:start;
+           padding:26px 0; border-top:1px solid var(--line); }
+  .panel:first-child { border-top:none; }
+  .panel .seq { font-family:var(--mono); font-size:13px; color:var(--accent); padding-top:4px; }
+  .panel .seq .beat { display:block; color:var(--ink-faint); margin-top:6px; font-size:10.5px; letter-spacing:.04em; }
+  .panel .art { width:96px; height:96px; border:1px solid var(--line); background:var(--paper); }
+  .panel .art svg { width:100%; height:100%; display:block; }
+  .panel .body h3 { font-family:var(--display); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0; color:var(--ink); }
+  .panel .body p { margin:10px 0 0; max-width:60ch; color:var(--ink); }
+
+  /* pivot + latent styling */
+  .panel.pivot { background:var(--accent-wash); margin:0 -28px; padding-left:28px; padding-right:28px; }
+  .panel.pivot .body h3 { color:var(--accent-deep); }
+  .panel.pivot .seq { color:var(--accent-deep); }
+
+  /* fork */
+  .fork { margin:16px 0 0; padding:16px 0 0; border-top:1px dashed var(--accent); }
+  .fork .prompt { font-family:var(--mono); font-size:12px; color:var(--ink-muted); }
+  .fork .ends { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:12px 0 0; }
+  .fork .end { border-left:2px solid var(--accent); padding:2px 0 2px 14px; }
+  .fork .end .label { font-family:var(--display); font-weight:700; font-size:17px; color:var(--ink); }
+  .fork .end.variant .label { color:var(--ink-muted); }
+  .fork .end .reading { margin:6px 0 0; font-size:15px; color:var(--ink-muted); }
+  .fork .end .tag { font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+
+  /* footer */
+  .foot { padding:34px 0 60px; }
+  .foot .note { font-family:var(--mono); font-size:12px; color:var(--ink-faint); line-height:1.9; }
+  .foot .note b { color:var(--ink-muted); font-weight:500; }
+
+  @media (max-width:720px){
+    .panel { grid-template-columns:64px 1fr; }
+    .panel .art { grid-column:1 / -1; width:96px; }
+    .fork .ends { grid-template-columns:1fr; }
+    .nav .co { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <div class="crumb"><b>mnem</b><span class="arr">→</span>drafts<span class="arr">→</span>storyboard</div>
+    <div class="co">rendering · <b>Storyboard.yobj</b><br>register · round-3e / instrument</div>
+  </nav>
+</div>
+<div class="bar"></div>
+
+<div class="wrap">
+  <header class="head" id="head"></header>
+
+  <div class="field" id="spine">
+    <div class="glyph">metarium · <b>the beats accrete left → right</b></div>
+  </div>
+
+  <div class="shead">
+    <span class="no" id="panelCount"></span>
+    <h2>The panels</h2>
+    <span class="side" id="spineLabel"></span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="panels" id="panels"></div>
+</div>
+
+<div class="bar thin"></div>
+<div class="wrap">
+  <footer class="foot"><div class="note" id="foot"></div></footer>
+</div>
+
+<script id="yobj" type="application/json">
+{
+  "yType": "Storyboard",
+  "book": "draft",
+  "slug": "zen-stick-storyboard",
+  "title": "The Stick",
+  "subtitle": "A monastery, a double-bind, and the beat where the story breaks.",
+  "source": {
+    "form": "Zen kōan (the master's staff / double-bind)",
+    "carried_by": "Slavoj Žižek, as an image of the authentic act",
+    "canonical_end": "The student seizes the stick and breaks it.",
+    "variant_end": "The student seizes the stick and strikes the teacher with it."
+  },
+  "spine": { "kind": "metarium", "label": "hall → claim → double-bind → break → act" },
+  "panels": [
+    { "seq":1, "beat":"SETTING", "heading":"The hall", "glyph":"rows", "state":"solid",
+      "body":"A monastery at zazen. Students sit the long stillness in rows. Teachers walk the aisles, a stick carried along the line." },
+    { "seq":2, "beat":"RUPTURE", "heading":"The waking", "glyph":"leave", "state":"solid",
+      "body":"One student surfaces from the sitting, certain — and does not wait. He breaks the rows and runs." },
+    { "seq":3, "beat":"CLAIM", "heading":"“What is real?”", "glyph":"meet", "state":"solid",
+      "body":"He reaches the teacher: “I have found the truth. Tell me — what is real?”" },
+    { "seq":4, "beat":"DOUBLE-BIND", "heading":"The stick is raised", "glyph":"bind", "state":"solid",
+      "body":"The teacher lifts the stick. “Say it is real — I strike you. Say it is imaginary — I strike you. Say nothing — I strike you.” Every answer inside the question is already lost." },
+    { "seq":5, "beat":"THE-BREAK", "heading":"Where the story breaks", "glyph":"fracture", "state":"pivot",
+      "body":"This is the beat that cannot be answered from inside. The forced choice offers three doors and a beating behind each. The scene holds — and then the frame itself gives way." },
+    { "seq":6, "beat":"THE-ACT", "heading":"He takes the stick", "glyph":"cross", "state":"latent",
+      "body":"The student does not choose a door. He steps through the frame — seizes the stick out of the teacher's hand and changes the terms of the whole exchange.",
+      "fork":{ "prompt":"One act, two endings the tradition tells:",
+        "endings":[
+          { "key":"canonical", "label":"… and breaks it.", "reading":"The dualism is refused, not solved. The act dissolves the question's grip." },
+          { "key":"variant", "label":"… and strikes the teacher.", "reading":"The student answers in the teacher's own currency — the lesson turned back on the one who set it." }
+        ] } }
+  ]
+}
+</script>
+
+<script>
+  const yo = JSON.parse(document.getElementById('yobj').textContent);
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const el = (t, a = {}, kids = []) => {
+    const ns = ['svg','g','line','circle','rect','path','polyline'].includes(t) ? SVGNS : null;
+    const n = ns ? document.createElementNS(ns, t) : document.createElement(t);
+    for (const k in a) (k === 'text') ? (n.textContent = a[k]) : n.setAttribute(k, a[k]);
+    (Array.isArray(kids) ? kids : [kids]).forEach(c => c && n.appendChild(c));
+    return n;
+  };
+
+  // ---- header ----
+  const head = document.getElementById('head');
+  head.appendChild(el('div', { class:'kicker', text:`${yo.yType} · ${yo.book}/${yo.slug}` }));
+  head.appendChild(el('h1', { text: yo.title }));
+  head.appendChild(el('p', { class:'sub', text: yo.subtitle }));
+  const chips = el('div', { class:'chips' });
+  chips.appendChild(el('span', { class:'chip', text: yo.source.form }));
+  chips.appendChild(el('span', { class:'chip ghost', text: yo.source.carried_by }));
+  chips.appendChild(el('span', { class:'chip inkline', text:`${yo.panels.length} beats · 1 fork` }));
+  head.appendChild(chips);
+
+  document.getElementById('panelCount').textContent = '§ ' + String(yo.panels.length).padStart(2,'0');
+  document.getElementById('spineLabel').textContent = yo.spine.label;
+
+  // ---- spine: metarium timeline ----
+  const svg = el('svg', { viewBox:'0 0 1080 150', preserveAspectRatio:'none' });
+  const n = yo.panels.length, pad = 60, span = 1080 - pad*2, y = 96;
+  // baseline
+  svg.appendChild(el('line', { x1:pad, y1:y, x2:1080-pad, y2:y, stroke:'#101a1c', 'stroke-width':'2' }));
+  yo.panels.forEach((p, i) => {
+    const x = pad + (span * i)/(n-1);
+    const pivot = p.state === 'pivot', latent = p.state === 'latent';
+    // schema node rising off the timeline
+    const h = 30 + (i * 6);
+    const stroke = latent ? '#5d6eff' : (pivot ? '#1717f4' : '#101a1c');
+    svg.appendChild(el('line', { x1:x, y1:y, x2:x, y2:y-h, stroke, 'stroke-width': pivot?'2':'1.5',
+      'stroke-dasharray': latent ? '3 3' : '0' }));
+    svg.appendChild(el('circle', { cx:x, cy:y-h, r: pivot?'6':'4',
+      fill: latent ? '#ffffff' : stroke, stroke, 'stroke-width':'1.5' }));
+    // lateral graph relation to the previous beat
+    if (i > 0) {
+      const px = pad + (span*(i-1))/(n-1);
+      svg.appendChild(el('path', {
+        d:`M ${px} ${y-1} Q ${(px+x)/2} ${y+18} ${x} ${y-1}`,
+        fill:'none', stroke:'#1717f4', 'stroke-width':'1', opacity:'0.35' }));
+    }
+    // fracture mark at the pivot
+    if (pivot) {
+      svg.appendChild(el('path', { d:`M ${x-9} ${y+8} l 6 -8 l -5 -6`, fill:'none', stroke:'#1717f4', 'stroke-width':'2' }));
+      svg.appendChild(el('path', { d:`M ${x+9} ${y+8} l -6 -8 l 5 -6`, fill:'none', stroke:'#1717f4', 'stroke-width':'2' }));
+    }
+    svg.appendChild(el('text', {}, [])); // spacer noop
+  });
+  document.getElementById('spine').appendChild(svg);
+
+  // ---- per-panel glyphs (field idiom) ----
+  function glyph(kind, state) {
+    const s = el('svg', { viewBox:'0 0 96 96' });
+    const ink = '#101a1c', blue = '#1717f4', ghost = '#5d6eff';
+    const line = (x1,y1,x2,y2,o={}) => s.appendChild(el('line', Object.assign({x1,y1,x2,y2,stroke:ink,'stroke-width':'1.5'},o)));
+    const dot = (cx,cy,r,o={}) => s.appendChild(el('circle', Object.assign({cx,cy,r,fill:ink},o)));
+    if (kind === 'rows') { for (let r=0;r<3;r++) for (let c=0;c<3;c++) dot(28+c*20, 28+r*20, 3); line(14,84,82,84,{stroke:blue}); }
+    else if (kind === 'leave') { for (let r=0;r<3;r++) for (let c=0;c<3;c++) dot(24+c*16, 26+r*16, 2.5,{fill:'#8b968f'}); dot(74,20,4,{fill:blue}); line(60,34,74,20,{stroke:blue}); }
+    else if (kind === 'meet') { dot(30,48,5,{fill:blue}); dot(66,48,5); line(35,48,61,48,{stroke:blue,'stroke-dasharray':'3 3'}); }
+    else if (kind === 'bind') { line(48,20,48,40,{stroke:ink,'stroke-width':'2'}); [28,48,68].forEach(x=>{ line(48,40,x,72,{stroke:blue}); dot(x,72,3,{fill:blue}); }); }
+    else if (kind === 'fracture') { line(20,20,44,50,{stroke:blue,'stroke-width':'2'}); line(52,46,76,76,{stroke:blue,'stroke-width':'2'}); line(44,50,52,46,{stroke:'#ffffff','stroke-width':'3'}); }
+    else if (kind === 'cross') { line(16,60,80,36,{stroke:ghost,'stroke-width':'1.5','stroke-dasharray':'3 3'}); dot(16,60,4,{fill:ink}); dot(80,36,5,{fill:'#ffffff',stroke:ghost,'stroke-width':'1.5'}); }
+    return s;
+  }
+
+  // ---- panels ----
+  const wrap = document.getElementById('panels');
+  yo.panels.forEach(p => {
+    const row = el('div', { class:'panel' + (p.state==='pivot' ? ' pivot':'') });
+    const seq = el('div', { class:'seq', text:'§' + String(p.seq).padStart(2,'0') });
+    seq.appendChild(el('span', { class:'beat', text:p.beat }));
+    row.appendChild(seq);
+    row.appendChild(el('div', { class:'art' }, glyph(p.glyph, p.state)));
+    const body = el('div', { class:'body' });
+    body.appendChild(el('h3', { text:p.heading }));
+    body.appendChild(el('p', { text:p.body }));
+    if (p.fork) {
+      const f = el('div', { class:'fork' });
+      f.appendChild(el('div', { class:'prompt', text:p.fork.prompt }));
+      const ends = el('div', { class:'ends' });
+      p.fork.endings.forEach(e => {
+        const end = el('div', { class:'end ' + e.key });
+        end.appendChild(el('div', { class:'tag', text:e.key }));
+        end.appendChild(el('div', { class:'label', text:e.label }));
+        end.appendChild(el('div', { class:'reading', text:e.reading }));
+        ends.appendChild(end);
+      });
+      f.appendChild(ends);
+      body.appendChild(f);
+    }
+    row.appendChild(body);
+    wrap.appendChild(row);
+  });
+
+  // ---- footer ----
+  const foot = document.getElementById('foot');
+  foot.innerHTML =
+    `source · <b>${yo.source.form}</b>, carried by ${yo.source.carried_by}<br>` +
+    `canonical ending · <b>${yo.source.canonical_end}</b><br>` +
+    `variant ending · <b>${yo.source.variant_end}</b><br>` +
+    `status · <b>draft</b> — a worked example storyboard.`;
+</script>
+</body>
+</html>
