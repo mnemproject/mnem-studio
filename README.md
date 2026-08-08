@@ -124,9 +124,19 @@ mnem platform repos to run locally.
 
 This bundle is dual-licensed so code and creative assets travel under the right terms:
 
-- **Code** — the `.py` sources, `pyproject.toml`, and `.ytype` schema declarations are **MIT**
-  (see [`LICENSE`](LICENSE)).
+- **Code** — the `.py` sources, `pyproject.toml`, and `.ytype` schema declarations are
+  **PolyForm Noncommercial 1.0.0** (see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE)).
 - **Content** — the example draftbooks/storyboards, scene artifacts, theme assets, and documentation
-  prose are **CC-BY-4.0** (see [`LICENSE-CONTENT.md`](LICENSE-CONTENT.md)).
+  prose are **CC-BY-NC-4.0** (see [`LICENSE-CONTENT.md`](LICENSE-CONTENT.md)).
 
 Each skill folder is independently portable and carries the same terms.
+
+### Acknowledgements
+
+© Vignesh Sundaresan (Metakovan) — blockchain architect
+([vigneshsundaresan.net](https://vigneshsundaresan.net) · [metakovan.net](https://metakovan.net))
+
+Part of the mnembyte ecosystem:
+[mnembyte.net](https://mnembyte.net) · [padimai.net](https://padimai.net) ·
+[mnem.com](https://mnem.com) · [onemai.net](https://onemai.net) ·
+[metarium.net](https://metarium.net) · [yettagam.net](https://yettagam.net)
